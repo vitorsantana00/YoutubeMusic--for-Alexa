@@ -1,0 +1,7 @@
+/home/vitor/Documentos/estudos_java/servidor/alexa-music-helper/src/main/java/com/personal/alexamusic/service/YoutubeMusicService.java
+/home/vitor/Documentos/estudos_java/servidor/alexa-music-helper/src/main/java/com/personal/alexamusic/AlexaMusicApplication.java
+/home/vitor/Documentos/estudos_java/servidor/alexa-music-helper/src/main/java/com/personal/alexamusic/handler/PlayIntentHandler.java
+/home/vitor/Documentos/estudos_java/servidor/alexa-music-helper/src/main/java/com/personal/alexamusic/handler/LaunchRequestHandler.java
+/home/vitor/Documentos/estudos_java/servidor/alexa-music-helper/src/main/java/com/personal/alexamusic/handler/FallbackAndSystemHandlers.java
+/home/vitor/Documentos/estudos_java/servidor/alexa-music-helper/src/main/java/com/personal/alexamusic/handler/AudioPlayerHandlers.java
+/home/vitor/Documentos/estudos_java/servidor/alexa-music-helper/src/main/java/com/personal/alexamusic/config/AlexaConfig.java
