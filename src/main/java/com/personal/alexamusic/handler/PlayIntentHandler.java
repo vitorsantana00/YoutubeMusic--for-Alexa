@@ -41,8 +41,8 @@ public class PlayIntentHandler implements RequestHandler {
         if (songSlot != null && songSlot.getValue() != null) {
             String songName = songSlot.getValue().toLowerCase();
             
-            // Bypass para caso a música parede e ela tente mandar "tocar a proxima musica" via texto.
-            if (songName.equals("proxima") || songName.equals("próxima") || songName.contains("proxima musica") || songName.contains("próxima música") || songName.equals("pular")) {
+            // Bypass agressivo: Se a intenção for pular, interceptamos antes de pesquisar o termo "próxima" no YouTube.
+            if (songName.matches(".*\\b(proxima|próxima|pular|seguinte|adiante|passar)\\b.*")) {
                 String lastToken = YoutubeMusicService.getLastToken();
                 if (lastToken != null && lastToken.contains(":")) {
                     try {
@@ -59,10 +59,10 @@ public class PlayIntentHandler implements RequestHandler {
                                 .addAudioPlayerPlayDirective(PlayBehavior.REPLACE_ALL, 0L, null, nextToken, nextTrack.getUrl())
                                 .build();
                     } catch (Exception e) {
-                        return input.getResponseBuilder().withSpeech("Tive um problema ao tentar pular.").build();
+                        return input.getResponseBuilder().withSpeech("Tive um problema ao tentar pular a rádio.").build();
                     }
                 } else {
-                    return input.getResponseBuilder().withSpeech("Não tenho registro da última música para pular. Por favor, peça uma música específica.").build();
+                    return input.getResponseBuilder().withSpeech("Ainda não tenho registro musical para pular na rádio. Por favor, peça o nome de uma música para darmos o play inicial.").build();
                 }
             }
 
