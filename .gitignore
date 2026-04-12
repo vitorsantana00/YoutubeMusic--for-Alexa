@@ -1,0 +1,21 @@
+# Arquivos de Senhas e Cookies sensíveis
+cookies.txt
+
+# Arquivos de Compilação do Java
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Arquivos das IDEs
+.idea/
+.vscode/
+*.iml
+*.project
+*.classpath
+*.settings/
+
+# Arquivos do OS
+.DS_Store
+Thumbs.db

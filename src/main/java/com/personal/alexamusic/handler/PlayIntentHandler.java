@@ -39,14 +39,40 @@ public class PlayIntentHandler implements RequestHandler {
         String speechText;
 
         if (songSlot != null && songSlot.getValue() != null) {
-            String songName = songSlot.getValue();
+            String songName = songSlot.getValue().toLowerCase();
+            
+            // Bypass para caso a música parede e ela tente mandar "tocar a proxima musica" via texto.
+            if (songName.equals("proxima") || songName.equals("próxima") || songName.contains("proxima musica") || songName.contains("próxima música") || songName.equals("pular")) {
+                String lastToken = YoutubeMusicService.getLastToken();
+                if (lastToken != null && lastToken.contains(":")) {
+                    try {
+                        String[] parts = lastToken.split(":");
+                        String seedVideoId = parts[0];
+                        int index = Integer.parseInt(parts[1]);
+                        int nextIndex = index + 1;
+                        
+                        AudioTrack nextTrack = youtubeMusicService.getSongFromPlaylist(seedVideoId, nextIndex);
+                        String nextToken = seedVideoId + ":" + nextIndex;
+                        YoutubeMusicService.setLastToken(nextToken);
+                        
+                        return input.getResponseBuilder()
+                                .addAudioPlayerPlayDirective(PlayBehavior.REPLACE_ALL, 0L, null, nextToken, nextTrack.getUrl())
+                                .build();
+                    } catch (Exception e) {
+                        return input.getResponseBuilder().withSpeech("Tive um problema ao tentar pular.").build();
+                    }
+                } else {
+                    return input.getResponseBuilder().withSpeech("Não tenho registro da última música para pular. Por favor, peça uma música específica.").build();
+                }
+            }
+
             speechText = "Buscando e tocando " + songName + " na Rádio.";
             
             try {
                 AudioTrack track = youtubeMusicService.searchAndGetFirstSong(songName);
                 
-                // O token segue o formato seedVideoId:index
                 String token = track.getVideoId() + ":1";
+                YoutubeMusicService.setLastToken(token); // Atualiza memória global!
                 
                 return input.getResponseBuilder()
                         .withSpeech("Tocando " + track.getTitle())
@@ -69,4 +95,5 @@ public class PlayIntentHandler implements RequestHandler {
         }
     }
 }
+
 

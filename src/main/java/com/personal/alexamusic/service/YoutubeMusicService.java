@@ -4,6 +4,7 @@ import com.personal.alexamusic.model.AudioTrack;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,32 +14,61 @@ import java.util.logging.Logger;
 public class YoutubeMusicService {
     
     private static final Logger LOGGER = Logger.getLogger(YoutubeMusicService.class.getName());
+    
+    // Armazena a última música que comecou para evitar que comandos "Próxima" se percam.
+    private static String LAST_TOKEN = null;
+    
+    public static String getLastToken() {
+        return LAST_TOKEN;
+    }
+    
+    public static void setLastToken(String token) {
+        LAST_TOKEN = token;
+        LOGGER.info("LAST_TOKEN atualizado para: " + token);
+    }
 
     public AudioTrack searchAndGetFirstSong(String songName) {
         LOGGER.info("Buscando música: " + songName);
-        ProcessBuilder processBuilder = new ProcessBuilder(
+        List<String> command = new ArrayList<>(List.of(
                 "yt-dlp",
                 "--print", "id",
                 "--print", "title",
                 "--print", "urls",
-                "-f", "bestaudio",
-                "ytsearch1:" + songName
-        );
+                "-f", "bestaudio"
+        ));
+        
+        injectCookiesIfPresent(command);
+        command.add("ytsearch1:" + songName);
+        
+        ProcessBuilder processBuilder = new ProcessBuilder(command);
         return executeYtDlp(processBuilder, "searchAndGetFirstSong");
     }
 
     public AudioTrack getSongFromPlaylist(String seedVideoId, int index) {
         LOGGER.info("Buscando prox música do Mix. Raiz: " + seedVideoId + " | Index: " + index);
-        ProcessBuilder processBuilder = new ProcessBuilder(
+        List<String> command = new ArrayList<>(List.of(
                 "yt-dlp",
                 "--playlist-items", String.valueOf(index),
                 "--print", "id",
                 "--print", "title",
                 "--print", "urls",
-                "-f", "bestaudio",
-                "https://www.youtube.com/watch?v=" + seedVideoId + "&list=RD" + seedVideoId
-        );
+                "-f", "bestaudio"
+        ));
+        
+        injectCookiesIfPresent(command);
+        command.add("https://www.youtube.com/watch?v=" + seedVideoId + "&list=RD" + seedVideoId);
+        
+        ProcessBuilder processBuilder = new ProcessBuilder(command);
         return executeYtDlp(processBuilder, "getSongFromPlaylist");
+    }
+
+    private void injectCookiesIfPresent(List<String> command) {
+        File cookiesFile = new File("cookies.txt");
+        if (cookiesFile.exists() && !cookiesFile.isDirectory()) {
+            LOGGER.info("Detecção DPAPI: Arquivo 'cookies.txt' encontrado! Injetando segurança anti-bot para login...");
+            command.add("--cookies");
+            command.add("cookies.txt");
+        }
     }
 
     private AudioTrack executeYtDlp(ProcessBuilder processBuilder, String context) {
@@ -51,7 +81,7 @@ public class YoutubeMusicService {
             List<String> validOutput = new ArrayList<>();
             
             while ((line = reader.readLine()) != null) {
-                if (line.startsWith("WARNING") || line.startsWith("ERROR")) {
+                if (line.startsWith("WARNING") || line.startsWith("ERROR") || line.startsWith("Extracting")) {
                     LOGGER.info("yt-dlp log: " + line);
                 } else if (!line.trim().isEmpty()) {
                     validOutput.add(line.trim());
@@ -65,7 +95,6 @@ public class YoutubeMusicService {
             
             // Esperamos 3 linhas de output na ordem: id, title, url
             if (validOutput.size() >= 3) {
-                // Como pegamos de trás pra frente caso haja outputs sujos no começo:
                 String url = validOutput.get(validOutput.size() - 1);
                 String title = validOutput.get(validOutput.size() - 2);
                 String id = validOutput.get(validOutput.size() - 3);

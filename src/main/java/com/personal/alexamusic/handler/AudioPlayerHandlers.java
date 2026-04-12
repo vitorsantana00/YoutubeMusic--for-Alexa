@@ -57,6 +57,7 @@ public class AudioPlayerHandlers {
                         String nextToken = seedVideoId + ":" + nextIndex;
                         
                         LOGGER.info("Enfileirando prox musica: " + nextTrack.getTitle());
+                        YoutubeMusicService.setLastToken(nextToken);
                         
                         return input.getResponseBuilder()
                                 .addAudioPlayerPlayDirective(PlayBehavior.ENQUEUE, 0L, token, nextToken, nextTrack.getUrl())
@@ -65,6 +66,11 @@ public class AudioPlayerHandlers {
                         LOGGER.warning("Falha ao preparar proxima musica: " + e.getMessage());
                     }
                 }
+            } else if (input.matches(Predicates.requestType(PlaybackStartedRequest.class))) {
+                PlaybackStartedRequest request = (PlaybackStartedRequest) input.getRequestEnvelope().getRequest();
+                if (request.getToken() != null) {
+                    YoutubeMusicService.setLastToken(request.getToken());
+                }
             }
 
             // Para os demais eventos, retornamos vazio para manter o servidor feliz.
@@ -72,3 +78,4 @@ public class AudioPlayerHandlers {
         }
     }
 }
+
