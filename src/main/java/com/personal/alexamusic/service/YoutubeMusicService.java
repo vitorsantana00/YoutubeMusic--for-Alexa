@@ -63,12 +63,9 @@ public class YoutubeMusicService {
     }
 
     private void injectCookiesIfPresent(List<String> command) {
-        File cookiesFile = new File("cookies.txt");
-        if (cookiesFile.exists() && !cookiesFile.isDirectory()) {
-            LOGGER.info("Detecção DPAPI: Arquivo 'cookies.txt' encontrado! Injetando segurança anti-bot para login...");
-            command.add("--cookies");
-            command.add("cookies.txt");
-        }
+        LOGGER.info("Injetando autenticação nativa e segura através do Firefox para acessar a Rádio Premium...");
+        command.add("--cookies-from-browser");
+        command.add("firefox");
     }
 
     private AudioTrack executeYtDlp(ProcessBuilder processBuilder, String context) {

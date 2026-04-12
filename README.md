@@ -32,6 +32,13 @@ Você pode decidir entre usar o **Modo 1 PC** (deixar o programa rodando no comp
 3. **Ngrok**: O túnel que vai abrir sua porta local para a internet.
    - Baixe no [Ngrok](https://ngrok.com/), instale e adicione o seu Token (`ngrok config add-authtoken SEU_TOKEN`).
 
+### 🍪 OBRIGATÓRIO (Bypass de limite de 1 minuto e Contas Premium)
+O YouTube corta robôs anônimos com 1 minuto de música. O código está preparado para o login! 
+1. No seu Firefox ou Chrome, acesse o [YouTube Music](https://music.youtube.com/) e logue na sua conta (seja gratuita ou premium).
+2. Use uma extensão como **"Get cookies.txt LOCALLY"** e baixe o seu arquivo de cookies.
+3. Arraste esse arquivo para dentro da pasta raiz do projeto. 
+> Fique tranquilo! Criei um `.gitignore` de segurança altíssima. Você NUNCA vai conseguir subir ou dar commits nesse arquivo na internet/GitHub. Ele ficará apenas trancado no seu PC.
+
 ---
 
 ## 🚀 Ligando o Servidor
