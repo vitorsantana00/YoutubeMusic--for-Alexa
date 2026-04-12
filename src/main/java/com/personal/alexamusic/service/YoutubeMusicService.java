@@ -37,7 +37,6 @@ public class YoutubeMusicService {
                 "-f", "bestaudio"
         ));
         
-        injectCookiesIfPresent(command);
         command.add("ytsearch1:" + songName);
         
         ProcessBuilder processBuilder = new ProcessBuilder(command);
@@ -55,18 +54,13 @@ public class YoutubeMusicService {
                 "-f", "bestaudio"
         ));
         
-        injectCookiesIfPresent(command);
         command.add("https://www.youtube.com/watch?v=" + seedVideoId + "&list=RD" + seedVideoId);
         
         ProcessBuilder processBuilder = new ProcessBuilder(command);
         return executeYtDlp(processBuilder, "getSongFromPlaylist");
     }
 
-    private void injectCookiesIfPresent(List<String> command) {
-        LOGGER.info("Injetando autenticação nativa e segura através do Firefox para acessar a Rádio Premium...");
-        command.add("--cookies-from-browser");
-        command.add("firefox");
-    }
+    // Removida inteçao de cookies devido a bloqueio do YouTube por Challenge PO
 
     private AudioTrack executeYtDlp(ProcessBuilder processBuilder, String context) {
         try {
