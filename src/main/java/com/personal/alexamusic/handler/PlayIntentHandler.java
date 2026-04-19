@@ -14,10 +14,12 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.logging.Logger;
 
 @Component
 public class PlayIntentHandler implements RequestHandler {
 
+    private static final Logger LOGGER = Logger.getLogger(PlayIntentHandler.class.getName());
     private final YoutubeMusicService youtubeMusicService;
 
     @Autowired
@@ -36,64 +38,40 @@ public class PlayIntentHandler implements RequestHandler {
         Map<String, Slot> slots = intentRequest.getIntent().getSlots();
         Slot songSlot = slots.get("SongName");
 
-        String speechText;
-
-        if (songSlot != null && songSlot.getValue() != null) {
-            String songName = songSlot.getValue().toLowerCase();
-            
-            // Bypass agressivo: Se a intenção for pular, interceptamos antes de pesquisar o termo "próxima" no YouTube.
-            if (songName.matches(".*\\b(proxima|próxima|pular|seguinte|adiante|passar)\\b.*")) {
-                String lastToken = YoutubeMusicService.getLastToken();
-                if (lastToken != null && lastToken.contains(":")) {
-                    try {
-                        String[] parts = lastToken.split(":");
-                        String seedVideoId = parts[0];
-                        int index = Integer.parseInt(parts[1]);
-                        int nextIndex = index + 1;
-                        
-                        AudioTrack nextTrack = youtubeMusicService.getSongFromPlaylist(seedVideoId, nextIndex);
-                        String nextToken = seedVideoId + ":" + nextIndex;
-                        YoutubeMusicService.setLastToken(nextToken);
-                        
-                        return input.getResponseBuilder()
-                                .addAudioPlayerPlayDirective(PlayBehavior.REPLACE_ALL, 0L, null, nextToken, nextTrack.getUrl())
-                                .build();
-                    } catch (Exception e) {
-                        return input.getResponseBuilder().withSpeech("Tive um problema ao tentar pular a rádio.").build();
-                    }
-                } else {
-                    return input.getResponseBuilder().withSpeech("Ainda não tenho registro musical para pular na rádio. Por favor, peça o nome de uma música para darmos o play inicial.").build();
-                }
-            }
-
-            speechText = "Buscando e tocando " + songName + " na Rádio.";
-            
-            try {
-                AudioTrack track = youtubeMusicService.searchAndGetFirstSong(songName);
-                
-                String token = track.getVideoId() + ":1";
-                YoutubeMusicService.setLastToken(token); // Atualiza memória global!
-                
-                return input.getResponseBuilder()
-                        .withSpeech("Tocando " + track.getTitle())
-                        .addAudioPlayerPlayDirective(PlayBehavior.REPLACE_ALL, 0L, null, token, track.getUrl())
-                        .withSimpleCard("Music Helper", "Tocando: " + track.getTitle())
-                        .build();
-
-            } catch (Exception e) {
-                speechText = "Desculpe, ocorreu um erro ao tentar buscar a música.";
-                return input.getResponseBuilder()
-                        .withSpeech(speechText)
-                        .build();
-            }
-        } else {
-            speechText = "Não entendi o nome da música. Por favor, tente novamente.";
+        if (songSlot == null || songSlot.getValue() == null) {
             return input.getResponseBuilder()
-                    .withSpeech(speechText)
-                    .withReprompt("Diga: toque o nome de uma música.")
+                    .withSpeech("Não entendi o nome da música. Por favor, tente novamente.")
+                    .withReprompt("Diga: toque o nome de uma música ou artista.")
+                    .build();
+        }
+
+        String songName = songSlot.getValue();
+        LOGGER.info("PlayIntent recebido para: " + songName);
+
+        try {
+            // Busca a música no YouTube — o service já dispara o carregamento
+            // do Radio Mix em background automaticamente
+            AudioTrack track = youtubeMusicService.searchAndGetFirstSong(songName);
+
+            // Token formato: seedVideoId:index
+            // Index 1 = a música original que o usuário pediu
+            // A partir do index 2, são as músicas do Radio Mix (relacionadas)
+            String token = track.getVideoId() + ":1";
+            YoutubeMusicService.setLastToken(token);
+
+            LOGGER.info("Tocando: " + track.getTitle() + " (seed: " + track.getVideoId() + ")");
+
+            return input.getResponseBuilder()
+                    .withSpeech("Tocando " + track.getTitle())
+                    .addAudioPlayerPlayDirective(PlayBehavior.REPLACE_ALL, 0L, null, token, track.getUrl())
+                    .withSimpleCard("Music Helper", "Tocando: " + track.getTitle())
+                    .build();
+
+        } catch (Exception e) {
+            LOGGER.severe("Erro ao buscar música '" + songName + "': " + e.getMessage());
+            return input.getResponseBuilder()
+                    .withSpeech("Desculpe, ocorreu um erro ao buscar " + songName + ". Tente novamente.")
                     .build();
         }
     }
 }
-
-
